@@ -1,0 +1,129 @@
+"use client"
+
+import { createClient } from "@/lib/client"
+
+/**
+ * Update user's online status
+ */
+export async function updateUserStatus(userId: string, status: "online" | "away" | "busy" | "offline") {
+  const supabase = createClient()
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({
+      status,
+      last_seen: new Date().toISOString(),
+    })
+    .eq("id", userId)
+
+  if (error) {
+    console.error("[v0] Failed to update status:", error)
+  }
+}
+
+/**
+ * Set user as online and keep presence active
+ */
+export function startPresenceTracking(userId: string) {
+  // Set initial online status
+  updateUserStatus(userId, "online")
+
+  // Update presence every 30 seconds
+  const intervalId = setInterval(() => {
+    updateUserStatus(userId, "online")
+  }, 30000)
+
+  // Set offline on page unload
+  const handleBeforeUnload = () => {
+    updateUserStatus(userId, "offline")
+  }
+
+  window.addEventListener("beforeunload", handleBeforeUnload)
+
+  // Return cleanup function
+  return () => {
+    clearInterval(intervalId)
+    window.removeEventListener("beforeunload", handleBeforeUnload)
+    updateUserStatus(userId, "offline")
+  }
+}
+
+/**
+ * Subscribe to presence updates for specific users
+ */
+export function subscribeToPresence(userIds: string[], onUpdate: (userId: string, status: string) => void) {
+  const supabase = createClient()
+
+  const channel = supabase
+    .channel("presence_updates")
+    .on(
+      "postgres_changes",
+      {
+        event: "UPDATE",
+        schema: "public",
+        table: "profiles",
+        filter: `id=in.(${userIds.join(",")})`,
+      },
+      (payload) => {
+        onUpdate(payload.new.id, payload.new.status)
+      },
+    )
+    .subscribe()
+
+  return () => {
+    supabase.removeChannel(channel)
+  }
+}
+
+/**
+ * Update typing indicator for a conversation
+ */
+export async function updateTypingIndicator(userId: string, conversationId: string, isTyping: boolean) {
+  const supabase = createClient()
+
+  const { error } = await supabase.from("typing_indicators").upsert(
+    {
+      user_id: userId,
+      conversation_id: conversationId,
+      is_typing: isTyping,
+      updated_at: new Date().toISOString(),
+    },
+    {
+      onConflict: "conversation_id,user_id",
+    },
+  )
+
+  if (error) {
+    console.error("[v0] Failed to update typing indicator:", error)
+  }
+}
+
+/**
+ * Subscribe to typing indicators for a conversation
+ */
+export function subscribeToTyping(conversationId: string, userId: string, onUpdate: (isTyping: boolean) => void) {
+  const supabase = createClient()
+
+  const channel = supabase
+    .channel(`typing:${conversationId}`)
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "typing_indicators",
+        filter: `conversation_id=eq.${conversationId}`,
+      },
+      (payload) => {
+        // Only notify about other users' typing status
+        if (payload.new.user_id !== userId) {
+          onUpdate(payload.new.is_typing)
+        }
+      },
+    )
+    .subscribe()
+
+  return () => {
+    supabase.removeChannel(channel)
+  }
+}
