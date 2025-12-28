@@ -35,6 +35,10 @@ Follow these steps to set up the project locally.
 - Git
 
 ### 2. Environment Configuration
+
+Create a `.env.local` file in the root directory and add the following keys.
+
+```bash
 # ------------------------------------------------------------------
 # REQUIRED: Client-Side Connection
 # ------------------------------------------------------------------
@@ -52,7 +56,7 @@ SUPABASE_SERVICE_ROLE_KEY="your-service-role-key"
 # ------------------------------------------------------------------
 # POSTGRES_URL=...
 # SUPABASE_JWT_SECRET=...
-
+```
 ### 3. Database Setup (Supabase)
 Go to the SQL Editor in your Supabase Dashboard and run the following script to create the tables and security policies.
 
