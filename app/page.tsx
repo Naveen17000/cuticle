@@ -88,7 +88,7 @@ export default function HomePage() {
                     </Link>
                   </Button>
                   <Button asChild size="lg" variant="outline" className="h-12 px-8 text-base bg-white border-slate-200 hover:bg-slate-50 w-full sm:w-auto transition-transform hover:-translate-y-0.5">
-                    <Link href="https://github.com/your-repo" target="_blank">
+                    <Link href="https://github.com/Naveen17000/cuticle.git" target="_blank">
                       <Github className="mr-2 h-4 w-4" /> Open Source
                     </Link>
                   </Button>
@@ -355,7 +355,7 @@ export default function HomePage() {
             <div className="flex gap-6">
               <Link href="#" className="text-slate-400 hover:text-slate-900 transition-colors">Privacy</Link>
               <Link href="#" className="text-slate-400 hover:text-slate-900 transition-colors">Terms</Link>
-              <Link href="#" className="text-slate-400 hover:text-slate-900 transition-colors">GitHub</Link>
+              <Link href="https://github.com/Naveen17000/cuticle.git" className="text-slate-400 hover:text-slate-900 transition-colors">GitHub</Link>
             </div>
           </div>
         </div>
