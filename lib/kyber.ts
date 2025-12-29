@@ -32,23 +32,20 @@ export async function generateKeyPair(): Promise<KyberKeyPair> {
 
 /** Encrypt a message using recipient's public key */
 export async function encryptMessage(message: string, recipientPublicKey: Uint8Array): Promise<EncryptedMessage> {
-  // Ephemeral key for this encryption
   const ephemeralKey = await crypto.subtle.generateKey(
     { name: "ECDH", namedCurve: "P-384" },
     true,
     ["deriveKey", "deriveBits"]
   )
 
-  // Import recipient's public key
   const recipientKey = await crypto.subtle.importKey(
     "spki",
-    recipientPublicKey.buffer, // ✅ pass ArrayBuffer
+    recipientPublicKey.buffer,
     { name: "ECDH", namedCurve: "P-384" },
     false,
     []
   )
 
-  // Derive shared secret
   const sharedSecret = await crypto.subtle.deriveKey(
     { name: "ECDH", public: recipientKey },
     ephemeralKey.privateKey,
@@ -57,7 +54,6 @@ export async function encryptMessage(message: string, recipientPublicKey: Uint8A
     ["encrypt"]
   )
 
-  // Encrypt the message
   const encoder = new TextEncoder()
   const messageBytes = encoder.encode(message)
   const iv = crypto.getRandomValues(new Uint8Array(12))
@@ -72,7 +68,6 @@ export async function encryptMessage(message: string, recipientPublicKey: Uint8A
   combined.set(iv, 0)
   combined.set(new Uint8Array(ciphertextBuffer), iv.length)
 
-  // Export ephemeral public key (encapsulated key)
   const ephemeralPublicKeyRaw = await crypto.subtle.exportKey("spki", ephemeralKey.publicKey)
   const sharedSecretRaw = await crypto.subtle.exportKey("raw", sharedSecret)
 
@@ -85,26 +80,23 @@ export async function encryptMessage(message: string, recipientPublicKey: Uint8A
 
 /** Decrypt a message using recipient's private key */
 export async function decryptMessage(encrypted: EncryptedMessage, privateKey: Uint8Array): Promise<DecryptedMessage> {
-  // Import recipient's private key
   const privateKeyObj = await crypto.subtle.importKey(
     "pkcs8",
-    privateKey.buffer, // ✅ pass ArrayBuffer
+    privateKey.buffer,
     { name: "ECDH", namedCurve: "P-384" },
     false,
     ["deriveKey", "deriveBits"]
   )
 
-  // Import ephemeral public key
   const ephemeralPublicKeyRaw = base64ToArrayBuffer(encrypted.encapsulatedKey)
   const ephemeralPublicKey = await crypto.subtle.importKey(
     "spki",
-    ephemeralPublicKeyRaw.buffer, // ✅ pass ArrayBuffer
+    ephemeralPublicKeyRaw.buffer,
     { name: "ECDH", namedCurve: "P-384" },
     false,
     []
   )
 
-  // Derive shared secret
   const sharedSecret = await crypto.subtle.deriveKey(
     { name: "ECDH", public: ephemeralPublicKey },
     privateKeyObj,
@@ -127,7 +119,17 @@ export async function decryptMessage(encrypted: EncryptedMessage, privateKey: Ui
   return { plaintext: decoder.decode(decryptedBuffer) }
 }
 
-/** Convert ArrayBuffer/Uint8Array → Base64 */
+/** Export public key as Base64 */
+export function exportPublicKey(publicKey: Uint8Array): string {
+  return arrayBufferToBase64(publicKey)
+}
+
+/** Import public key from Base64 */
+export function importPublicKey(base64Key: string): Uint8Array {
+  return base64ToArrayBuffer(base64Key)
+}
+
+/** Utility functions */
 function arrayBufferToBase64(buffer: ArrayBuffer | Uint8Array): string {
   const bytes = buffer instanceof Uint8Array ? buffer : new Uint8Array(buffer)
   let binary = ""
@@ -135,7 +137,6 @@ function arrayBufferToBase64(buffer: ArrayBuffer | Uint8Array): string {
   return btoa(binary)
 }
 
-/** Convert Base64 → Uint8Array */
 function base64ToArrayBuffer(base64: string): Uint8Array {
   const binary = atob(base64)
   const bytes = new Uint8Array(binary.length)
