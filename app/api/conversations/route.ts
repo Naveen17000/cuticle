@@ -1,17 +1,20 @@
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
     const { userId, contactId } = await req.json()
 
     if (!userId || !contactId) {
-      return NextResponse.json({ error: "Missing userId or contactId" }, { status: 400 })
+      return NextResponse.json(
+        { error: "Missing userId or contactId" },
+        { status: 400 }
+      )
     }
 
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
     )
 
     const { data: conversation, error: convError } = await supabase
@@ -22,7 +25,10 @@ export async function POST(req: Request) {
 
     if (convError) {
       console.error("[API] Conversation insert error:", convError)
-      return NextResponse.json({ error: convError.message }, { status: 500 })
+      return NextResponse.json(
+        { error: convError.message },
+        { status: 500 }
+      )
     }
 
     const { error: participantsError } = await supabase
@@ -34,12 +40,21 @@ export async function POST(req: Request) {
 
     if (participantsError) {
       console.error("[API] Participants insert error:", participantsError)
-      return NextResponse.json({ error: participantsError.message }, { status: 500 })
+      return NextResponse.json(
+        { error: participantsError.message },
+        { status: 500 }
+      )
     }
 
-    return NextResponse.json({ id: conversation.id }, { status: 201 })
+    return NextResponse.json(
+      { id: conversation.id },
+      { status: 201 }
+    )
   } catch (err: any) {
     console.error("[API] Unexpected error:", err)
-    return NextResponse.json({ error: err.message ?? "Server error" }, { status: 500 })
+    return NextResponse.json(
+      { error: err.message ?? "Server error" },
+      { status: 500 }
+    )
   }
 }

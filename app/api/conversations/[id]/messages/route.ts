@@ -1,12 +1,18 @@
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import { createClient as createServerClient } from "@/lib/server"
 
-export async function GET(req: Request, { params }: { params: { id: string } }) {
+export async function GET(
+  req: NextRequest,
+  context: { params: Promise<{ id: string }> }
+) {
   try {
-    const paramsObj: any = await params
-    const conversationId = paramsObj.id
+    const { id: conversationId } = await context.params
+
     if (!conversationId) {
-      return NextResponse.json({ error: "Missing conversation id" }, { status: 400 })
+      return NextResponse.json(
+        { error: "Missing conversation id" },
+        { status: 400 }
+      )
     }
 
     const supabase = await createServerClient(true)
@@ -19,10 +25,16 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
 
     if (messagesError) {
       console.error("[API] Error fetching messages:", messagesError)
-      return NextResponse.json({ error: "Failed to fetch messages", details: messagesError }, { status: 500 })
+      return NextResponse.json(
+        { error: "Failed to fetch messages", details: messagesError },
+        { status: 500 }
+      )
     }
 
-    const senderIds = Array.from(new Set((messages || []).map((m: any) => m.sender_id)))
+    const senderIds = Array.from(
+      new Set((messages ?? []).map((m: any) => m.sender_id))
+    )
+
     const { data: profiles, error: profilesError } = await supabase
       .from("profiles")
       .select("id, display_name, avatar_url")
@@ -30,12 +42,21 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
 
     if (profilesError) {
       console.error("[API] Error fetching profiles for messages:", profilesError)
-      return NextResponse.json({ error: "Failed to fetch profiles", details: profilesError }, { status: 500 })
+      return NextResponse.json(
+        { error: "Failed to fetch profiles", details: profilesError },
+        { status: 500 }
+      )
     }
 
-    return NextResponse.json({ messages, profiles })
+    return NextResponse.json({
+      messages: messages ?? [],
+      profiles: profiles ?? [],
+    })
   } catch (err) {
     console.error("[API] Unexpected error fetching messages:", err)
-    return NextResponse.json({ error: "Unexpected error" }, { status: 500 })
+    return NextResponse.json(
+      { error: "Unexpected error" },
+      { status: 500 }
+    )
   }
 }

@@ -1,13 +1,18 @@
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import { createClient as createServerClient } from "@/lib/server"
 
-export async function GET(req: Request, { params }: { params: { id: string } }) {
+export async function GET(
+  req: NextRequest,
+  context: { params: Promise<{ id: string }> }
+) {
   try {
-    // `params` can be async in Next.js route handlers — await before accessing
-    const paramsObj: any = await params
-    const conversationId = paramsObj.id
+    const { id: conversationId } = await context.params
+
     if (!conversationId) {
-      return NextResponse.json({ error: "Missing conversation id" }, { status: 400 })
+      return NextResponse.json(
+        { error: "Missing conversation id" },
+        { status: 400 }
+      )
     }
 
     const supabase = await createServerClient(true)
@@ -19,10 +24,13 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
 
     if (partError) {
       console.error("[API] Error fetching participants:", partError)
-      return NextResponse.json({ error: "Failed to fetch participants", details: partError }, { status: 500 })
+      return NextResponse.json(
+        { error: "Failed to fetch participants", details: partError },
+        { status: 500 }
+      )
     }
 
-    const ids = participants?.map((p: any) => p.user_id) || []
+    const ids = (participants ?? []).map((p: any) => p.user_id)
 
     const { data: profiles, error: profilesError } = await supabase
       .from("profiles")
@@ -31,12 +39,21 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
 
     if (profilesError) {
       console.error("[API] Error fetching profiles:", profilesError)
-      return NextResponse.json({ error: "Failed to fetch profiles", details: profilesError }, { status: 500 })
+      return NextResponse.json(
+        { error: "Failed to fetch profiles", details: profilesError },
+        { status: 500 }
+      )
     }
 
-    return NextResponse.json({ participants, profiles })
+    return NextResponse.json({
+      participants: participants ?? [],
+      profiles: profiles ?? [],
+    })
   } catch (err) {
     console.error("[API] Unexpected error fetching participants:", err)
-    return NextResponse.json({ error: "Unexpected error" }, { status: 500 })
+    return NextResponse.json(
+      { error: "Unexpected error" },
+      { status: 500 }
+    )
   }
 }
