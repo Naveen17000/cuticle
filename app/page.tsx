@@ -221,104 +221,205 @@ export default function HomePage() {
         </section>
 
         {/* ARCHITECTURE DIAGRAM SECTION */}
-        <section id="architecture" className="py-20 border-t border-slate-200 bg-slate-50 relative overflow-hidden">
+        <section
+          id="architecture"
+          className="py-20 border-t border-slate-200 bg-slate-50 relative overflow-hidden"
+        >
+          {/* Background Grid */}
           <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center [mask-image:radial-gradient(ellipse_at_center,black_40%,transparent_70%)] opacity-5 pointer-events-none"></div>
+
           <div className="container mx-auto px-4 relative z-10">
+            {/* Section Header */}
             <div className="text-center max-w-3xl mx-auto mb-16">
-              <h2 className="text-3xl font-bold text-slate-900 sm:text-4xl">The Kyber Encapsulation Process</h2>
+              <h2 className="text-3xl font-bold text-slate-900 sm:text-4xl">
+                The Kyber Encapsulation Process
+              </h2>
               <p className="mt-4 text-lg text-slate-600">
                 How Alice and Bob establish a quantum-safe shared secret over an untrusted network using CRYSTALS-Kyber KEM.
               </p>
             </div>
-            
-            {/* Diagram Container */}
+
+ {/* Diagram Grid */}
             <div className="relative bg-white rounded-3xl border border-slate-200 p-8 lg:p-12 shadow-xl">
-              <motion.div 
-                 initial="hidden"
-                 whileInView="visible"
-                 viewport={{ once: true, margin: "-100px" }}
-                 className="grid lg:grid-cols-3 gap-8 items-center relative"
+              <motion.div
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true, margin: "-100px" }}
+                className="grid lg:grid-cols-3 gap-8 items-start relative"
               >
-                {/* ACTOR 1: BOB (Receiver/Key Generator) */}
-                <motion.div variants={fadeUpVariants} custom={1} className="flex flex-col items-center text-center relative z-20">
-                   <div className="h-24 w-24 bg-blue-50 border-2 border-blue-200 rounded-2xl flex items-center justify-center mb-4 shadow-sm relative group">
-                      <User className="h-10 w-10 text-blue-600" />
-                      <div className="absolute -top-2 -right-2 h-8 w-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-bold ring-4 ring-white">Bob</div>
-                   </div>
-                   <h3 className="text-lg font-bold text-slate-900">Receiver</h3>
-                   <div className="mt-4 bg-slate-100 border border-slate-200 rounded-lg p-3 text-xs font-mono text-slate-600 text-left w-full max-w-[200px]">
-                      <p className="font-semibold text-blue-700 mb-1">1. KeyGen()</p>
-                      <p>sk_B (Private)</p>
-                      <p>pk_B (Public)</p>
-                   </div>
+                {/* BOB (Receiver) - Step 1 */}
+                <motion.div
+                  variants={fadeUpVariants}
+                  custom={1}
+                  className="flex flex-col items-center text-center relative z-20"
+                >
+                  <div className="h-24 w-24 bg-blue-50 border-2 border-blue-200 rounded-2xl flex items-center justify-center mb-4 shadow-sm relative">
+                    <User className="h-10 w-10 text-blue-600" />
+                    <div className="absolute -top-2 -right-2 h-8 w-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-bold ring-4 ring-white">
+                      Bob
+                    </div>
+                  </div>
+                  <h3 className="text-lg font-bold text-slate-900">Receiver</h3>
+                  <div className="mt-4 bg-slate-100 border border-slate-200 rounded-lg p-3 text-xs font-mono text-slate-600 text-left w-full max-w-[200px]">
+                    <p className="font-semibold text-blue-700 mb-1">1. KeyGen()</p>
+                    <p>sk_B (Private)</p>
+                    <p>pk_B (Public)</p>
+                  </div>
+                  <div className="mt-4 h-16"></div>
                 </motion.div>
 
-                {/* NETWORK / UNTRUSTED CHANNEL MIDDLE - FIXED SPACING */}
-                <motion.div variants={fadeUpVariants} custom={2} className="flex flex-col items-center justify-center relative z-10 min-h-[400px]"> {/* Increased height to 400px to prevent overlap */}
-                  
-                  {/* Top Data Flow: Public Key pk_B goes Bob -> Alice */}
-                  <div className="absolute top-8 left-0 w-full h-12 flex items-center">
-                     {/* On desktop, arrow points Left to Right (Bob to Alice) */}
-                     <svg className="w-full h-full absolute hidden lg:block" viewBox="0 0 400 40" fill="none" preserveAspectRatio="none">
-                        <motion.path d="M 0 20 L 400 20" stroke="#94a3b8" strokeWidth="2" strokeDasharray="8 8" variants={lineVariants} />
-                        <motion.path d="M 390 20 L 380 10 M 390 20 L 380 30" stroke="#94a3b8" strokeWidth="2" initial={{opacity:0}} animate={{opacity:1}} transition={{delay: 1.5}} />
-                     </svg>
-                     <motion.div initial={{opacity:0, y:10}} animate={{opacity:1, y:0}} transition={{delay: 0.8}} className="bg-white border border-blue-200 text-blue-700 px-3 py-1 rounded-full text-xs font-bold shadow-sm mx-auto relative z-20 flex items-center gap-1">
-                        <FileKey className="h-3 w-3" /> Public Key (pk_B)
-                     </motion.div>
+                {/* NETWORK / CHANNEL */}
+                <motion.div
+                  variants={fadeUpVariants}
+                  custom={2}
+                  className="flex flex-col items-center justify-start relative z-10 min-h-[500px]"
+                >
+                  {/* Top Data Flow - Bob to Alice */}
+                  <div className="absolute top-24 left-0 w-full h-12 flex items-center">
+                    <svg
+                      className="w-full h-full absolute hidden lg:block"
+                      viewBox="0 0 400 40"
+                      fill="none"
+                      preserveAspectRatio="none"
+                    >
+                      <motion.path
+                        d="M 0 20 L 400 20"
+                        stroke="#94a3b8"
+                        strokeWidth="2"
+                        strokeDasharray="8 8"
+                        variants={lineVariants}
+                      />
+                      <motion.path
+                        d="M 390 20 L 380 10 M 390 20 L 380 30"
+                        stroke="#94a3b8"
+                        strokeWidth="2"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 1.5 }}
+                      />
+                    </svg>
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.8 }}
+                      className="bg-white border border-blue-200 text-blue-700 px-3 py-1 rounded-full text-xs font-bold shadow-sm mx-auto relative z-20 flex items-center gap-1"
+                    >
+                      <FileKey className="h-3 w-3" /> Public Key (pk_B)
+                    </motion.div>
                   </div>
 
-                  {/* Central Untrusted Network Node */}
-                  <div className="h-32 w-32 bg-slate-100 border-2 border-slate-300 border-dashed rounded-full flex flex-col items-center justify-center p-4 text-center z-20 relative my-auto">
-                     <Network className="h-8 w-8 text-slate-400 mb-2" />
-                     <p className="text-xs font-bold text-slate-500">Untrusted Server</p>
-                     <p className="text-[10px] text-slate-400">Can see pk_B & Ciphertext</p>
+                  {/* Central Network Node */}
+                  <div className="h-32 w-32 bg-slate-100 border-2 border-slate-300 border-dashed rounded-full flex flex-col items-center justify-center p-4 text-center z-20 relative mt-48">
+                    <Network className="h-8 w-8 text-slate-400 mb-2" />
+                    <p className="text-xs font-bold text-slate-500">Untrusted Server</p>
+                    <p className="text-[10px] text-slate-400">Can see pk_B & Ciphertext</p>
                   </div>
 
-                   {/* Bottom Data Flow: Ciphertext 'c' goes Alice -> Bob */}
-                   <div className="absolute bottom-8 left-0 w-full h-12 flex items-center">
-                     {/* On desktop, arrow points Right to Left (Alice to Bob) */}
-                     <svg className="w-full h-full absolute hidden lg:block" viewBox="0 0 400 40" fill="none" preserveAspectRatio="none">
-                        <motion.path d="M 400 20 L 0 20" stroke="#94a3b8" strokeWidth="2" strokeDasharray="8 8" variants={lineVariants} transition={{delay: 2}}/>
-                        <motion.path d="M 10 20 L 20 10 M 10 20 L 20 30" stroke="#94a3b8" strokeWidth="2" initial={{opacity:0}} animate={{opacity:1}} transition={{delay: 3.5}} />
-                     </svg>
-                     <motion.div initial={{opacity:0, y:-10}} animate={{opacity:1, y:0}} transition={{delay: 2.8}} className="bg-white border border-purple-200 text-purple-700 px-3 py-1 rounded-full text-xs font-bold shadow-sm mx-auto relative z-20 flex items-center gap-1">
-                        <Database className="h-3 w-3" /> Ciphertext (c)
-                     </motion.div>
+                  {/* Bottom Data Flow - Alice to Bob */}
+                  <div className="absolute bottom-24 left-0 w-full h-12 flex items-center">
+                    <svg
+                      className="w-full h-full absolute hidden lg:block"
+                      viewBox="0 0 400 40"
+                      fill="none"
+                      preserveAspectRatio="none"
+                    >
+                      <motion.path
+                        d="M 400 20 L 0 20"
+                        stroke="#94a3b8"
+                        strokeWidth="2"
+                        strokeDasharray="8 8"
+                        variants={lineVariants}
+                        transition={{ delay: 2 }}
+                      />
+                      <motion.path
+                        d="M 10 20 L 20 10 M 10 20 L 20 30"
+                        stroke="#94a3b8"
+                        strokeWidth="2"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 3.5 }}
+                      />
+                    </svg>
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 2.8 }}
+                      className="bg-white border border-purple-200 text-purple-700 px-3 py-1 rounded-full text-xs font-bold shadow-sm mx-auto relative z-20 flex items-center gap-1"
+                    >
+                      <Database className="h-3 w-3" /> Ciphertext (c)
+                    </motion.div>
                   </div>
                 </motion.div>
 
-
-                {/* ACTOR 3: ALICE (Sender/Encapsulator) */}
-                <motion.div variants={fadeUpVariants} custom={3} className="flex flex-col items-center text-center relative z-20">
-                   <div className="h-24 w-24 bg-purple-50 border-2 border-purple-200 rounded-2xl flex items-center justify-center mb-4 shadow-sm relative group">
-                      <User className="h-10 w-10 text-purple-600" />
-                      <div className="absolute -top-2 -right-2 h-8 w-8 bg-purple-600 text-white rounded-full flex items-center justify-center text-xs font-bold ring-4 ring-white">Alice</div>
-                   </div>
-                   <h3 className="text-lg font-bold text-slate-900">Sender</h3>
-                   <div className="mt-4 bg-slate-100 border border-slate-200 rounded-lg p-3 text-xs font-mono text-slate-600 text-left w-full max-w-[200px]">
-                      <p className="font-semibold text-purple-700 mb-1">2. Encapsulate(pk_B)</p>
-                      <p>→ Shared Secret (ss)</p>
-                      <p>→ Ciphertext (c)</p>
-                   </div>
+                {/* ALICE (Sender) - Step 2 */}
+                <motion.div
+                  variants={fadeUpVariants}
+                  custom={3}
+                  className="flex flex-col items-center text-center relative z-20"
+                >
+                  <div className="h-24 w-24 bg-purple-50 border-2 border-purple-200 rounded-2xl flex items-center justify-center mb-4 shadow-sm relative">
+                    <User className="h-10 w-10 text-purple-600" />
+                    <div className="absolute -top-2 -right-2 h-8 w-8 bg-purple-600 text-white rounded-full flex items-center justify-center text-xs font-bold ring-4 ring-white">
+                      Alice
+                    </div>
+                  </div>
+                  <h3 className="text-lg font-bold text-slate-900">Sender</h3>
+                  <div className="mt-4 bg-slate-100 border border-slate-200 rounded-lg p-3 text-xs font-mono text-slate-600 text-left w-full max-w-[200px]">
+                    <p className="font-semibold text-purple-700 mb-1">2. Encapsulate(pk_B)</p>
+                    <p>→ Shared Secret (ss)</p>
+                    <p>→ Ciphertext (c)</p>
+                  </div>
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 4, type: "spring" }}
+                    className="mt-4 bg-green-100 border border-green-300 text-green-800 px-4 py-2 rounded-full text-xs font-bold flex items-center gap-2 shadow-md"
+                  >
+                    <CheckCircle className="h-4 w-4" />
+                    Alice has (ss)
+                  </motion.div>
                 </motion.div>
-
-                {/* Final State Indicators */}
-                <motion.div initial={{opacity: 0, scale: 0.8}} animate={{opacity:1, scale:1}} transition={{delay: 4, type: "spring"}} className="absolute bottom-0 left-4 lg:left-12 translate-y-1/2 bg-green-100 border border-green-300 text-green-800 px-4 py-2 rounded-full text-xs font-bold flex items-center gap-2 shadow-md z-30">
-                   <CheckCircle className="h-4 w-4" /> Bob has (ss)
-                </motion.div>
-                 <motion.div initial={{opacity: 0, scale: 0.8}} animate={{opacity:1, scale:1}} transition={{delay: 4, type: "spring"}} className="absolute bottom-0 right-4 lg:right-12 translate-y-1/2 bg-green-100 border border-green-300 text-green-800 px-4 py-2 rounded-full text-xs font-bold flex items-center gap-2 shadow-md z-30">
-                   <CheckCircle className="h-4 w-4" /> Alice has (ss)
-                </motion.div>
-
               </motion.div>
-              
+
+              {/* Step 3 - Bob Decapsulates - Centered Below */}
+              <motion.div
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true, margin: "-100px" }}
+                variants={fadeUpVariants}
+                custom={5}
+                className="flex flex-col items-center text-center relative z-20 mt-12 pt-12 border-t border-slate-200"
+              >
+                <div className="h-24 w-24 bg-blue-50 border-2 border-blue-200 rounded-2xl flex items-center justify-center mb-4 shadow-sm relative">
+                  <User className="h-10 w-10 text-blue-600" />
+                  <div className="absolute -top-2 -right-2 h-8 w-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-bold ring-4 ring-white">
+                    Bob
+                  </div>
+                </div>
+                <h3 className="text-lg font-bold text-slate-900">Receiver</h3>
+                <div className="mt-4 bg-slate-100 border border-slate-200 rounded-lg p-3 text-xs font-mono text-slate-600 text-left w-full max-w-[200px]">
+                  <p className="font-semibold text-blue-700 mb-1">3. Decapsulate(c, sk_B)</p>
+                  <p>→ Shared Secret (ss)</p>
+                </div>
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 4.2, type: "spring" }}
+                  className="mt-4 bg-green-100 border border-green-300 text-green-800 px-4 py-2 rounded-full text-xs font-bold flex items-center gap-2 shadow-md"
+                >
+                  <CheckCircle className="h-4 w-4" />
+                  Bob has (ss)
+                </motion.div>
+              </motion.div>
+
+              {/* Final Text */}
               <div className="text-center mt-16 text-sm text-slate-500">
-                 Once both parties hold the same Shared Secret (ss), they use it to encrypt actual messages via AES-256.
+                Once both parties hold the same Shared Secret (ss), they use it to encrypt actual messages via AES-256.
               </div>
             </div>
           </div>
         </section>
+
 
         {/* Technical Deep Dive */}
         <section id="security" className="py-20 bg-slate-900 text-white relative overflow-hidden">
