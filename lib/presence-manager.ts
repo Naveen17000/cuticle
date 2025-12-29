@@ -2,10 +2,20 @@
 
 import { createClient } from "@/lib/client"
 
+interface TypingIndicatorRow {
+  user_id: string
+  conversation_id: string
+  is_typing: boolean
+  updated_at: string
+}
+
 /**
  * Update user's online status
  */
-export async function updateUserStatus(userId: string, status: "online" | "away" | "busy" | "offline") {
+export async function updateUserStatus(
+  userId: string,
+  status: "online" | "away" | "busy" | "offline"
+) {
   const supabase = createClient()
 
   const { error } = await supabase
@@ -49,7 +59,10 @@ export function startPresenceTracking(userId: string) {
 /**
  * Subscribe to presence updates for specific users
  */
-export function subscribeToPresence(userIds: string[], onUpdate: (userId: string, status: string) => void) {
+export function subscribeToPresence(
+  userIds: string[],
+  onUpdate: (userId: string, status: string) => void
+) {
   const supabase = createClient()
 
   const channel = supabase
@@ -64,7 +77,7 @@ export function subscribeToPresence(userIds: string[], onUpdate: (userId: string
       },
       (payload) => {
         onUpdate(payload.new.id, payload.new.status)
-      },
+      }
     )
     .subscribe()
 
@@ -76,7 +89,11 @@ export function subscribeToPresence(userIds: string[], onUpdate: (userId: string
 /**
  * Update typing indicator for a conversation
  */
-export async function updateTypingIndicator(userId: string, conversationId: string, isTyping: boolean) {
+export async function updateTypingIndicator(
+  userId: string,
+  conversationId: string,
+  isTyping: boolean
+) {
   const supabase = createClient()
 
   const { error } = await supabase.from("typing_indicators").upsert(
@@ -88,7 +105,7 @@ export async function updateTypingIndicator(userId: string, conversationId: stri
     },
     {
       onConflict: "conversation_id,user_id",
-    },
+    }
   )
 
   if (error) {
@@ -99,7 +116,11 @@ export async function updateTypingIndicator(userId: string, conversationId: stri
 /**
  * Subscribe to typing indicators for a conversation
  */
-export function subscribeToTyping(conversationId: string, userId: string, onUpdate: (isTyping: boolean) => void) {
+export function subscribeToTyping(
+  conversationId: string,
+  userId: string,
+  onUpdate: (isTyping: boolean) => void
+) {
   const supabase = createClient()
 
   const channel = supabase
@@ -113,11 +134,13 @@ export function subscribeToTyping(conversationId: string, userId: string, onUpda
         filter: `conversation_id=eq.${conversationId}`,
       },
       (payload) => {
-        // Only notify about other users' typing status
-        if (payload.new.user_id !== userId) {
-          onUpdate(payload.new.is_typing)
-        }
-      },
+        const newRow = payload.new as TypingIndicatorRow | null
+
+        if (!newRow) return
+        if (newRow.user_id === userId) return
+
+        onUpdate(newRow.is_typing)
+      }
     )
     .subscribe()
 
