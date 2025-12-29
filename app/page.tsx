@@ -1,5 +1,7 @@
 "use client"
 
+export const dynamic = "force-dynamic"
+
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { Shield, Lock, Zap, Users, Key, Server, RefreshCw, CheckCircle, ArrowRight, Github, User, Network, FileKey, Database } from "lucide-react"
