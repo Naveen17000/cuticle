@@ -79,7 +79,6 @@ export function MessengerLayout({ user, profile, conversationIds }: MessengerLay
               <ConversationList
                 key={refreshKey}
                 userId={user.id}
-                conversationIds={conversationIds}
                 selectedConversationId={selectedConversationId}
                 onSelectConversation={setSelectedConversationId}
               />
