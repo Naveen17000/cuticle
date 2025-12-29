@@ -53,8 +53,14 @@ export function ConversationList({
   }
 
   useEffect(() => {
-    loadConversations()
+    // Wrap async call inside a function
+    const fetchConversations = async () => {
+      await loadConversations();
+    }
 
+    fetchConversations();
+
+    // Set up Supabase realtime subscription
     const channel = supabase
       .channel("conversation-messages")
       .on(
@@ -91,8 +97,12 @@ export function ConversationList({
       )
       .subscribe()
 
-    return () => supabase.removeChannel(channel)
+    // Cleanup subscription on unmount
+    return () => {
+      supabase.removeChannel(channel)
+    }
   }, [userId])
+
 
   const hasUnread = (c: Conversation) => {
     if (!c.lastMessage) return false
