@@ -5,13 +5,13 @@ export const dynamic = "force-dynamic"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { Shield, Lock, Zap, Users, Key, Server, RefreshCw, CheckCircle, ArrowRight, Github, User, Network, FileKey, Database } from "lucide-react"
-import { motion } from "framer-motion"
-import type { Easing } from "framer-motion"
+import { motion, Easing } from "framer-motion"
 
+// Numeric cubic-bezier equivalents for easing
 const easeOutExpo: Easing = [0.22, 1, 0.36, 1]
+const easeInOut: Easing = [0.42, 0, 0.58, 1]
 
 export default function HomePage() {
-  // Standard fade-up variant for scroll animations
   const fadeUpVariants = {
     hidden: { opacity: 0, y: 20 },
     visible: (i: number) => ({
@@ -25,13 +25,12 @@ export default function HomePage() {
     })
   }
 
-  // Variant for connection lines in the diagram
   const lineVariants = {
     hidden: { pathLength: 0, opacity: 0 },
     visible: { 
       pathLength: 1, 
       opacity: 1,
-      transition: { duration: 1.2, ease: "easeInOut" }
+      transition: { duration: 1.2, ease: easeInOut }
     }
   }
 
@@ -67,7 +66,7 @@ export default function HomePage() {
         <section className="relative overflow-hidden pt-16 pb-20 lg:pt-28 lg:pb-32">
           {/* Neon Blue Lock Effect */}
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-5 pointer-events-none lg:left-1/3 lg:translate-x-0">
-             <Lock className="h-[500px] w-[500px] text-blue-500 drop-shadow-[0_0_50px_rgba(59,130,246,0.6)] animate-pulse duration-[4s]" />
+            <Lock className="h-[500px] w-[500px] text-blue-500 drop-shadow-[0_0_50px_rgba(59,130,246,0.6)] animate-pulse duration-[4s]" />
           </div>
 
           <div className="container mx-auto px-4 relative z-10">
@@ -76,7 +75,7 @@ export default function HomePage() {
               <motion.div 
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.7, ease: "easeOut" }}
+                transition={{ duration: 0.7, ease: easeOutExpo }}
                 className="flex-1 text-center lg:text-left"
               >
                 <div className="inline-flex items-center rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-sm font-medium text-blue-600 mb-6">
@@ -120,9 +119,9 @@ export default function HomePage() {
 
               {/* Abstract UI Mockup */}
               <motion.div 
-                 initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                 animate={{ opacity: 1, scale: 1, y: 0 }}
-                 transition={{ duration: 0.7, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                transition={{ duration: 0.7, delay: 0.2, ease: easeOutExpo }}
                 className="flex-1 w-full max-w-lg lg:max-w-none relative"
               >
                 <div className="absolute -top-12 -right-12 h-64 w-64 bg-blue-400/10 rounded-full blur-3xl animate-[spin_12s_linear_infinite] supports-[animation-timeline]:animate-none"></div>
