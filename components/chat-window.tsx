@@ -21,9 +21,10 @@ interface Message {
 interface ChatWindowProps {
   conversationId: string
   userId: string
+  encryptionReady: boolean
 }
 
-export function ChatWindow({ conversationId, userId }: ChatWindowProps) {
+export function ChatWindow({ conversationId, userId, encryptionReady }: ChatWindowProps) {
   // Move client creation outside render or memoize if possible, 
   // but for now ensure we don't recreate it unnecessarily.
   const [supabase] = useState(() => createClient()) 
