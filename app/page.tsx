@@ -5,7 +5,8 @@ export const dynamic = "force-dynamic"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { Shield, Lock, Zap, Users, Key, Server, RefreshCw, CheckCircle, ArrowRight, Github, User, Network, FileKey, Database } from "lucide-react"
-import { Easing } from "framer-motion"
+import { motion } from "framer-motion"
+import type { Easing } from "framer-motion"
 
 const easeOutExpo: Easing = [0.22, 1, 0.36, 1]
 
