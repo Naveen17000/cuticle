@@ -5,7 +5,9 @@ export const dynamic = "force-dynamic"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { Shield, Lock, Zap, Users, Key, Server, RefreshCw, CheckCircle, ArrowRight, Github, User, Network, FileKey, Database } from "lucide-react"
-import { motion } from "framer-motion"
+import { Easing } from "framer-motion"
+
+const easeOutExpo: Easing = [0.22, 1, 0.36, 1]
 
 export default function HomePage() {
   // Standard fade-up variant for scroll animations
@@ -17,7 +19,7 @@ export default function HomePage() {
       transition: {
         delay: i * 0.15,
         duration: 0.6,
-        ease: [0.22, 1, 0.36, 1]
+        ease: easeOutExpo,
       }
     })
   }
