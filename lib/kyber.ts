@@ -16,11 +16,11 @@ export interface DecryptedMessage {
 /* ------------------ helpers ------------------ */
 
 function toArrayBuffer(u8: Uint8Array): ArrayBuffer {
-  return u8.buffer.slice(
-    u8.byteOffset,
-    u8.byteOffset + u8.byteLength
-  )
+  const buffer = new ArrayBuffer(u8.byteLength)
+  new Uint8Array(buffer).set(u8)
+  return buffer
 }
+
 
 function arrayBufferToBase64(buf: ArrayBuffer | Uint8Array): string {
   const bytes = buf instanceof Uint8Array ? buf : new Uint8Array(buf)
