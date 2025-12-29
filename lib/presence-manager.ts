@@ -25,22 +25,20 @@ export async function updateUserStatus(userId: string, status: "online" | "away"
  * Set user as online and keep presence active
  */
 export function startPresenceTracking(userId: string) {
-  // Set initial online status
+  if (typeof window === "undefined") return () => {}
+
   updateUserStatus(userId, "online")
 
-  // Update presence every 30 seconds
   const intervalId = setInterval(() => {
     updateUserStatus(userId, "online")
   }, 30000)
 
-  // Set offline on page unload
   const handleBeforeUnload = () => {
     updateUserStatus(userId, "offline")
   }
 
   window.addEventListener("beforeunload", handleBeforeUnload)
 
-  // Return cleanup function
   return () => {
     clearInterval(intervalId)
     window.removeEventListener("beforeunload", handleBeforeUnload)
