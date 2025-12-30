@@ -63,14 +63,15 @@ export default function HomePage() {
 
       <main className="flex-1">
         {/* Hero Section */}
-        <section className="relative overflow-hidden pt-16 pb-20 lg:pt-28 lg:pb-32">
+        {/* Adjusted padding to pull content up */}
+        <section className="relative overflow-hidden pt-12 pb-16 lg:pt-20 lg:pb-24">
           {/* Neon Blue Lock Effect */}
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-5 pointer-events-none lg:left-1/3 lg:translate-x-0">
-            <Lock className="h-[500px] w-[500px] text-blue-500 drop-shadow-[0_0_50px_rgba(59,130,246,0.6)] animate-pulse duration-[4s]" />
+            <Lock className="h-[400px] w-[400px] lg:h-[500px] lg:w-[500px] text-blue-500 drop-shadow-[0_0_50px_rgba(59,130,246,0.6)] animate-pulse duration-[4s]" />
           </div>
 
           <div className="container mx-auto px-4 relative z-10">
-            <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
+            <div className="flex flex-col lg:flex-row items-center gap-10 lg:gap-16">
               {/* Hero Text Content */}
               <motion.div 
                 initial={{ opacity: 0, x: -20 }}
@@ -88,17 +89,17 @@ export default function HomePage() {
                     <svg className="absolute -bottom-2 left-0 w-full h-2 text-blue-200" viewBox="0 0 100 10" preserveAspectRatio="none"><path d="M0 5 Q 25 0, 50 5 T 100 5" fill="none" stroke="currentColor" strokeWidth="2" /></svg>
                   </span>
                 </h1>
-                <p className="mb-8 text-xl text-slate-600 leading-relaxed">
+                <p className="mb-8 text-lg text-slate-600 leading-relaxed max-w-2xl mx-auto lg:mx-0">
                   Future-proof your conversations with NIST-standardized Post-Quantum Cryptography. 
                   End-to-end encryption that resists attacks from both classical and quantum computers.
                 </p>
-                <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
-                  <Button asChild size="lg" className="h-12 px-8 text-base bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-600/20 w-full sm:w-auto transition-transform hover:-translate-y-0.5">
+                <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3">
+                  <Button asChild size="lg" className="h-11 px-8 text-base bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-600/20 w-full sm:w-auto transition-transform hover:-translate-y-0.5">
                     <Link href="/auth/signup">
                       Start Messaging <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
                     </Link>
                   </Button>
-                  <Button asChild size="lg" variant="outline" className="h-12 px-8 text-base bg-white border-slate-200 hover:bg-slate-50 w-full sm:w-auto transition-transform hover:-translate-y-0.5">
+                  <Button asChild size="lg" variant="outline" className="h-11 px-8 text-base bg-white border-slate-200 hover:bg-slate-50 w-full sm:w-auto transition-transform hover:-translate-y-0.5">
                     <Link href="https://github.com/Naveen17000/cuticle.git" target="_blank">
                       <Github className="mr-2 h-4 w-4" /> Open Source
                     </Link>
@@ -122,7 +123,7 @@ export default function HomePage() {
                 initial={{ opacity: 0, scale: 0.95, y: 20 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 transition={{ duration: 0.7, delay: 0.2, ease: easeOutExpo }}
-                className="flex-1 w-full max-w-lg lg:max-w-none relative"
+                className="flex-1 w-full max-w-lg lg:max-w-none relative mt-8 lg:mt-0"
               >
                 <div className="absolute -top-12 -right-12 h-64 w-64 bg-blue-400/10 rounded-full blur-3xl animate-[spin_12s_linear_infinite] supports-[animation-timeline]:animate-none"></div>
                 <div className="absolute -bottom-12 -left-12 h-64 w-64 bg-purple-400/10 rounded-full blur-3xl animate-[bounce_10s_ease-in-out_infinite] supports-[animation-timeline]:animate-none"></div>
@@ -177,11 +178,12 @@ export default function HomePage() {
         </section>
 
         {/* Features Grid */}
-        <section id="features" className="bg-white py-20 relative z-10">
+        {/* Tighter vertical padding */}
+        <section id="features" className="bg-white py-16 relative z-10">
           <div className="container mx-auto px-4">
-            <div className="text-center max-w-2xl mx-auto mb-16">
+            <div className="text-center max-w-2xl mx-auto mb-10">
               <h2 className="text-3xl font-bold text-slate-900 sm:text-4xl">Built for absolute privacy</h2>
-              <p className="mt-4 text-lg text-slate-600">We stripped away the bloat and focused on zero-trust architecture.</p>
+              <p className="mt-3 text-lg text-slate-600">We stripped away the bloat and focused on zero-trust architecture.</p>
             </div>
             
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
@@ -221,26 +223,27 @@ export default function HomePage() {
         </section>
 
         {/* ARCHITECTURE DIAGRAM SECTION */}
+        {/* Optimized vertical spacing for the diagram */}
         <section
           id="architecture"
-          className="py-20 border-t border-slate-200 bg-slate-50 relative overflow-hidden"
+          className="py-16 border-t border-slate-200 bg-slate-50 relative overflow-hidden"
         >
           {/* Background Grid */}
           <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center [mask-image:radial-gradient(ellipse_at_center,black_40%,transparent_70%)] opacity-5 pointer-events-none"></div>
 
           <div className="container mx-auto px-4 relative z-10">
             {/* Section Header */}
-            <div className="text-center max-w-3xl mx-auto mb-16">
+            <div className="text-center max-w-3xl mx-auto mb-10">
               <h2 className="text-3xl font-bold text-slate-900 sm:text-4xl">
                 The Kyber Encapsulation Process
               </h2>
-              <p className="mt-4 text-lg text-slate-600">
-                How Alice and Bob establish a quantum-safe shared secret over an untrusted network using CRYSTALS-Kyber KEM.
+              <p className="mt-3 text-lg text-slate-600">
+                How Alice and Bob establish a quantum-safe shared secret over an untrusted network.
               </p>
             </div>
 
- {/* Diagram Grid */}
-            <div className="relative bg-white rounded-3xl border border-slate-200 p-8 lg:p-12 shadow-xl">
+            {/* Diagram Grid */}
+            <div className="relative bg-white rounded-3xl border border-slate-200 p-6 lg:p-8 shadow-xl">
               <motion.div
                 initial="hidden"
                 whileInView="visible"
@@ -253,29 +256,28 @@ export default function HomePage() {
                   custom={1}
                   className="flex flex-col items-center text-center relative z-20"
                 >
-                  <div className="h-24 w-24 bg-blue-50 border-2 border-blue-200 rounded-2xl flex items-center justify-center mb-4 shadow-sm relative">
-                    <User className="h-10 w-10 text-blue-600" />
-                    <div className="absolute -top-2 -right-2 h-8 w-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-bold ring-4 ring-white">
+                  <div className="h-20 w-20 bg-blue-50 border-2 border-blue-200 rounded-2xl flex items-center justify-center mb-3 shadow-sm relative">
+                    <User className="h-8 w-8 text-blue-600" />
+                    <div className="absolute -top-2 -right-2 h-7 w-7 bg-blue-600 text-white rounded-full flex items-center justify-center text-[10px] font-bold ring-4 ring-white">
                       Bob
                     </div>
                   </div>
-                  <h3 className="text-lg font-bold text-slate-900">Receiver</h3>
-                  <div className="mt-4 bg-slate-100 border border-slate-200 rounded-lg p-3 text-xs font-mono text-slate-600 text-left w-full max-w-[200px]">
+                  <h3 className="text-base font-bold text-slate-900">Receiver</h3>
+                  <div className="mt-2 bg-slate-100 border border-slate-200 rounded-lg p-3 text-xs font-mono text-slate-600 text-left w-full max-w-[180px]">
                     <p className="font-semibold text-blue-700 mb-1">1. KeyGen()</p>
                     <p>sk_B (Private)</p>
                     <p>pk_B (Public)</p>
                   </div>
-                  <div className="mt-4 h-16"></div>
                 </motion.div>
 
-                {/* NETWORK / CHANNEL */}
+                {/* NETWORK / CHANNEL - Compacted Height */}
                 <motion.div
                   variants={fadeUpVariants}
                   custom={2}
-                  className="flex flex-col items-center justify-start relative z-10 min-h-[500px]"
+                  className="flex flex-col items-center justify-start relative z-10 min-h-[400px]"
                 >
                   {/* Top Data Flow - Bob to Alice */}
-                  <div className="absolute top-24 left-0 w-full h-12 flex items-center">
+                  <div className="absolute top-20 left-0 w-full h-12 flex items-center">
                     <svg
                       className="w-full h-full absolute hidden lg:block"
                       viewBox="0 0 400 40"
@@ -308,15 +310,14 @@ export default function HomePage() {
                     </motion.div>
                   </div>
 
-                  {/* Central Network Node */}
-                  <div className="h-32 w-32 bg-slate-100 border-2 border-slate-300 border-dashed rounded-full flex flex-col items-center justify-center p-4 text-center z-20 relative mt-48">
-                    <Network className="h-8 w-8 text-slate-400 mb-2" />
-                    <p className="text-xs font-bold text-slate-500">Untrusted Server</p>
-                    <p className="text-[10px] text-slate-400">Can see pk_B & Ciphertext</p>
+                  {/* Central Network Node - Reduced Margin */}
+                  <div className="h-28 w-28 bg-slate-100 border-2 border-slate-300 border-dashed rounded-full flex flex-col items-center justify-center p-4 text-center z-20 relative mt-36">
+                    <Network className="h-8 w-8 text-slate-400 mb-1" />
+                    <p className="text-[10px] font-bold text-slate-500">Untrusted Server</p>
                   </div>
 
                   {/* Bottom Data Flow - Alice to Bob */}
-                  <div className="absolute bottom-24 left-0 w-full h-12 flex items-center">
+                  <div className="absolute bottom-20 left-0 w-full h-12 flex items-center">
                     <svg
                       className="w-full h-full absolute hidden lg:block"
                       viewBox="0 0 400 40"
@@ -357,14 +358,14 @@ export default function HomePage() {
                   custom={3}
                   className="flex flex-col items-center text-center relative z-20"
                 >
-                  <div className="h-24 w-24 bg-purple-50 border-2 border-purple-200 rounded-2xl flex items-center justify-center mb-4 shadow-sm relative">
-                    <User className="h-10 w-10 text-purple-600" />
-                    <div className="absolute -top-2 -right-2 h-8 w-8 bg-purple-600 text-white rounded-full flex items-center justify-center text-xs font-bold ring-4 ring-white">
+                  <div className="h-20 w-20 bg-purple-50 border-2 border-purple-200 rounded-2xl flex items-center justify-center mb-3 shadow-sm relative">
+                    <User className="h-8 w-8 text-purple-600" />
+                    <div className="absolute -top-2 -right-2 h-7 w-7 bg-purple-600 text-white rounded-full flex items-center justify-center text-[10px] font-bold ring-4 ring-white">
                       Alice
                     </div>
                   </div>
-                  <h3 className="text-lg font-bold text-slate-900">Sender</h3>
-                  <div className="mt-4 bg-slate-100 border border-slate-200 rounded-lg p-3 text-xs font-mono text-slate-600 text-left w-full max-w-[200px]">
+                  <h3 className="text-base font-bold text-slate-900">Sender</h3>
+                  <div className="mt-2 bg-slate-100 border border-slate-200 rounded-lg p-3 text-xs font-mono text-slate-600 text-left w-full max-w-[180px]">
                     <p className="font-semibold text-purple-700 mb-1">2. Encapsulate(pk_B)</p>
                     <p>→ Shared Secret (ss)</p>
                     <p>→ Ciphertext (c)</p>
@@ -373,74 +374,72 @@ export default function HomePage() {
                     initial={{ opacity: 0, scale: 0.8 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: 4, type: "spring" }}
-                    className="mt-4 bg-green-100 border border-green-300 text-green-800 px-4 py-2 rounded-full text-xs font-bold flex items-center gap-2 shadow-md"
+                    className="mt-4 bg-green-100 border border-green-300 text-green-800 px-4 py-1.5 rounded-full text-xs font-bold flex items-center gap-2 shadow-md"
                   >
-                    <CheckCircle className="h-4 w-4" />
+                    <CheckCircle className="h-3.5 w-3.5" />
                     Alice has (ss)
                   </motion.div>
                 </motion.div>
               </motion.div>
 
-              {/* Step 3 - Bob Decapsulates - Centered Below */}
+              {/* Step 3 - Bob Decapsulates - Centered Below - Pulled up */}
               <motion.div
                 initial="hidden"
                 whileInView="visible"
                 viewport={{ once: true, margin: "-100px" }}
                 variants={fadeUpVariants}
                 custom={5}
-                className="flex flex-col items-center text-center relative z-20 mt-12 pt-12 border-t border-slate-200"
+                className="flex flex-col items-center text-center relative z-20 mt-8 pt-8 border-t border-slate-200"
               >
-                <div className="h-24 w-24 bg-blue-50 border-2 border-blue-200 rounded-2xl flex items-center justify-center mb-4 shadow-sm relative">
-                  <User className="h-10 w-10 text-blue-600" />
-                  <div className="absolute -top-2 -right-2 h-8 w-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-bold ring-4 ring-white">
-                    Bob
+                <div className="flex gap-4 items-center mb-4">
+                  <div className="h-12 w-12 bg-blue-50 border border-blue-200 rounded-xl flex items-center justify-center shadow-sm">
+                    <User className="h-6 w-6 text-blue-600" />
+                  </div>
+                  <div className="text-left">
+                     <h3 className="text-sm font-bold text-slate-900">3. Decapsulate(c, sk_B)</h3>
+                     <p className="text-xs text-slate-500">Bob recovers Shared Secret</p>
                   </div>
                 </div>
-                <h3 className="text-lg font-bold text-slate-900">Receiver</h3>
-                <div className="mt-4 bg-slate-100 border border-slate-200 rounded-lg p-3 text-xs font-mono text-slate-600 text-left w-full max-w-[200px]">
-                  <p className="font-semibold text-blue-700 mb-1">3. Decapsulate(c, sk_B)</p>
-                  <p>→ Shared Secret (ss)</p>
-                </div>
+
                 <motion.div
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: 4.2, type: "spring" }}
-                  className="mt-4 bg-green-100 border border-green-300 text-green-800 px-4 py-2 rounded-full text-xs font-bold flex items-center gap-2 shadow-md"
+                  className="bg-green-100 border border-green-300 text-green-800 px-4 py-1.5 rounded-full text-xs font-bold flex items-center gap-2 shadow-md"
                 >
-                  <CheckCircle className="h-4 w-4" />
+                  <CheckCircle className="h-3.5 w-3.5" />
                   Bob has (ss)
                 </motion.div>
               </motion.div>
 
               {/* Final Text */}
-              <div className="text-center mt-16 text-sm text-slate-500">
+              <div className="text-center mt-8 text-sm text-slate-500 max-w-lg mx-auto">
                 Once both parties hold the same Shared Secret (ss), they use it to encrypt actual messages via AES-256.
               </div>
             </div>
           </div>
         </section>
 
-
         {/* Technical Deep Dive */}
-        <section id="security" className="py-20 bg-slate-900 text-white relative overflow-hidden">
+        <section id="security" className="py-16 bg-slate-900 text-white relative overflow-hidden">
             <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center [mask-image:linear-gradient(180deg,white,rgba(255,255,255,0))] opacity-10"></div>
           <div className="container mx-auto px-4 relative z-10">
-            <div className="grid lg:grid-cols-2 gap-12 items-center">
+            <div className="grid lg:grid-cols-2 gap-10 items-center">
               <motion.div
                  initial={{ opacity: 0, x: -30 }}
                  whileInView={{ opacity: 1, x: 0 }}
                  viewport={{ once: true }}
                  transition={{ duration: 0.6 }}
               >
-                <h2 className="text-3xl font-bold mb-6">Why Kyber-1024?</h2>
-                <div className="space-y-6 text-slate-300">
+                <h2 className="text-3xl font-bold mb-5">Why Kyber-1024?</h2>
+                <div className="space-y-5 text-slate-300">
                   <p>
                     Standard encryption methods (RSA, ECC) rely on math problems that quantum computers can solve easily using Shor's algorithm.
                   </p>
                   <p>
                     CRYSTALS-Kyber is a <strong>lattice-based</strong> cryptographic algorithm selected by NIST as the primary standard for Post-Quantum general encryption. Its mathematical foundation is believed to be resistant to both classical and quantum computer attacks.
                   </p>
-                  <div className="mt-8 grid grid-cols-2 gap-6">
+                  <div className="mt-6 grid grid-cols-2 gap-6">
                     <div className="border-l-2 border-blue-500 pl-4">
                       <div className="text-xl font-bold text-white">NIST FIPS 203</div>
                       <div className="text-sm opacity-80">Draft Standard</div>
@@ -459,7 +458,7 @@ export default function HomePage() {
                  whileInView={{ opacity: 1, y: 0 }}
                  viewport={{ once: true }}
                  transition={{ duration: 0.6, delay: 0.2 }}
-                className="rounded-2xl bg-slate-950/50 border border-slate-800 p-6 lg:p-8 font-mono text-[13px] lg:text-sm shadow-2xl relative relative group backdrop-blur-md"
+                className="rounded-2xl bg-slate-950/50 border border-slate-800 p-6 font-mono text-[13px] lg:text-sm shadow-2xl relative group backdrop-blur-md"
               >
                 <div className="absolute -inset-1 bg-gradient-to-r from-blue-600/20 to-purple-600/20 rounded-2xl blur-lg opacity-0 group-hover:opacity-100 transition duration-500"></div>
                 <div className="relative z-10">
@@ -489,16 +488,16 @@ export default function HomePage() {
         </section>
 
         {/* CTA Section */}
-        <section className="py-20 bg-white">
+        <section className="py-16 bg-white">
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             className="container mx-auto px-4 text-center"
           >
-            <div className="max-w-3xl mx-auto">
-              <h2 className="text-3xl font-bold text-slate-900 mb-6 sm:text-4xl">Ready to go dark?</h2>
-              <p className="text-xl text-slate-600 mb-8">
+            <div className="max-w-2xl mx-auto">
+              <h2 className="text-3xl font-bold text-slate-900 mb-4 sm:text-4xl">Ready to go dark?</h2>
+              <p className="text-lg text-slate-600 mb-8">
                 Join the network of users who value privacy above all else. Free, open-source, and secure forever.
               </p>
               <Button asChild size="lg" className="h-12 px-8 text-lg bg-slate-900 hover:bg-slate-800 transition-transform hover:scale-105 shadow-xl shadow-slate-900/20">
@@ -518,7 +517,7 @@ export default function HomePage() {
               <span className="font-semibold text-slate-700">Cuticle</span>
             </div>
             <div className="text-sm text-slate-500">
-              © 2024 Cuticle Inc. Built with Next.js & Supabase.
+              © 2025 Cuticle Inc. Built with Next.js & Supabase.
             </div>
             <div className="flex gap-6 text-sm">
               <Link href="#" className="text-slate-400 hover:text-slate-900 transition-colors">Privacy</Link>
