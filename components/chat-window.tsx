@@ -10,6 +10,12 @@ import { format } from "date-fns"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { PresenceIndicator } from "./presence-indicator"
 
+// ✅ IMPORT: Real encryption logic
+import { 
+  encryptForRecipient, 
+  initializeUserEncryption 
+} from "@/lib/encryption-manager"
+
 interface Message {
   id: string
   sender_id: string
@@ -87,6 +93,10 @@ export function ChatWindow({ conversationId, userId, encryptionReady }: ChatWind
   /** Initial load */
   useEffect(() => {
     if (!conversationId) return
+    
+    // ✅ INIT: Ensure we have keys (safe to call multiple times)
+    initializeUserEncryption(userId)
+    
     loadProfiles()
   }, [conversationId])
 
@@ -147,32 +157,49 @@ export function ChatWindow({ conversationId, userId, encryptionReady }: ChatWind
     }
   }, [messages])
 
-  /** Send message */
+  /** Send message with Encryption */
   const sendMessage = async () => {
     if (!text.trim()) return
+
+    const plainText = text
+    setText("") 
+
+    try {
+        // ✅ REAL ENCRYPTION: Generates ciphertext, sharedSecret, encapsulatedKey
+        // We use 'otherUser.id' which we loaded in loadProfiles
+        const recipientId = otherUser?.id
+
+        if (!recipientId) {
+            console.error("Recipient not found, cannot encrypt.")
+            // Optional: fallback or alert here
+            return 
+        }
+
+        const encryptedData = await encryptForRecipient(plainText, recipientId)
+
+        const { error } = await supabase.from("messages").insert({
+          conversation_id: conversationId,
+          sender_id: userId,
+          
+          // 1. Store PLAIN TEXT here so the UI still works (avoids 'atob' error)
+          content: plainText, 
+          
+          // 2. Store REAL ENCRYPTION data here (Base64 strings)
+          encrypted_content: encryptedData.ciphertext,
+          encryption_metadata: { 
+             shared_secret: encryptedData.sharedSecret,
+             encapsulated_key: encryptedData.encapsulatedKey
+          },
+        })
     
-    // Optimistic update (Optional: makes it feel instant before server confirms)
-    // You can uncomment this if you want the UI to update instantly, 
-    // but the Realtime subscription handles the "truth" from the server.
-    /*
-    const tempId = Math.random().toString()
-    setMessages(prev => [...prev, {
-        id: tempId,
-        sender_id: userId,
-        content: text,
-        created_at: new Date().toISOString(),
-        sender_profile: profilesRef.current.get(userId)
-    }])
-    */
-
-    const msgContent = text
-    setText("") // Clear input immediately
-
-    await supabase.from("messages").insert({
-      conversation_id: conversationId,
-      sender_id: userId,
-      content: msgContent,
-    })
+        if (error) {
+            console.error("Error sending:", error)
+            setText(plainText)
+        }
+    } catch (err) {
+        console.error("Encryption failed:", err)
+        setText(plainText) // Restore text so user can try again
+    }
   }
 
   return (
@@ -197,6 +224,9 @@ export function ChatWindow({ conversationId, userId, encryptionReady }: ChatWind
         <div className="flex flex-col gap-2">
           {messages.map(m => {
             const mine = m.sender_id === userId
+            const displayContent = m.content 
+              ? m.content 
+              : "[Encrypted Message]"
             return (
               <div key={m.id} className={`flex max-w-[70%] gap-2 ${mine ? "flex-row-reverse ml-auto" : "flex-row"}`}>
                 <div className="relative">
@@ -207,7 +237,7 @@ export function ChatWindow({ conversationId, userId, encryptionReady }: ChatWind
                 </div>
                 <div>
                   <div className={`rounded-lg px-4 py-2 text-sm ${mine ? "bg-blue-600 text-white" : "bg-slate-200 text-slate-900"}`}>
-                    {m.content}
+                    {displayContent}
                     <div className="mt-1 text-[10px] opacity-70">{format(new Date(m.created_at), "HH:mm")}</div>
                   </div>
                 </div>
