@@ -1,9 +1,5 @@
 // lib/kyber.ts
-// FIX: Import the standard NIST name "MlKem768" instead of "Kyber768"
 import { MlKem768 } from "crystals-kyber-js";
-
-// We still need standard crypto for the AES part (symmetric encryption)
-// ML-KEM only exchanges the KEYS safely; it doesn't encrypt the long text itself.
 
 export interface KyberKeyPair {
   publicKey: Uint8Array;
@@ -11,9 +7,9 @@ export interface KyberKeyPair {
 }
 
 export interface EncryptedMessage {
-  ciphertext: string;       // The actual message encrypted with AES
-  sharedSecret: string;     // The secret key used for AES
-  encapsulatedKey: string;  // The Kyber/ML-KEM "Capsule"
+  ciphertext: string;       
+  sharedSecret: string;     
+  encapsulatedKey: string;  
 }
 
 export interface DecryptedMessage {
@@ -39,10 +35,9 @@ function base64ToUint8Array(base64: string): Uint8Array {
   return bytes;
 }
 
-/* ------------------ Key Generation (ML-KEM) ------------------ */
+/* ------------------ Key Generation ------------------ */
 
 export async function generateKeyPair(): Promise<KyberKeyPair> {
-  // FIX: Instantiate MlKem768
   const recipient = new MlKem768();
   const [pk, sk] = await recipient.generateKeyPair();
 
@@ -52,30 +47,31 @@ export async function generateKeyPair(): Promise<KyberKeyPair> {
   };
 }
 
-/* ------------------ Encryption (ML-KEM + AES-GCM) ------------------ */
+/* ------------------ Encryption ------------------ */
 
 export async function encryptMessage(
   message: string,
   recipientPublicKey: Uint8Array
 ): Promise<EncryptedMessage> {
   
-  // 1. ML-KEM ENCAPSULATION
+  if (recipientPublicKey.length !== 1184) {
+    throw new Error(
+      `Invalid recipient key size: ${recipientPublicKey.length} bytes. Expected 1184 bytes (ML-KEM-768).`
+    );
+  }
+
   const sender = new MlKem768();
   const [c, ss] = await sender.encap(recipientPublicKey);
 
-  // 'ss' is the Shared Secret
-  // 'c' is the Encapsulated Key (Ciphertext in KEM terminology)
-
-  // 2. PREPARE AES KEY
+  // FIX: Force TypeScript to accept 'ss' as a BufferSource
   const aesKey = await crypto.subtle.importKey(
     "raw",
-    ss, 
+    ss as unknown as BufferSource, 
     { name: "AES-GCM" },
     false,
     ["encrypt"]
   );
 
-  // 3. ENCRYPT MESSAGE (AES-GCM)
   const iv = crypto.getRandomValues(new Uint8Array(12));
   const data = new TextEncoder().encode(message);
 
@@ -96,29 +92,27 @@ export async function encryptMessage(
   };
 }
 
-/* ------------------ Decryption (ML-KEM + AES-GCM) ------------------ */
+/* ------------------ Decryption ------------------ */
 
 export async function decryptMessage(
   encrypted: EncryptedMessage,
   privateKey: Uint8Array
 ): Promise<DecryptedMessage> {
 
-  // 1. ML-KEM DECAPSULATION
   const receiver = new MlKem768();
   const kyberCiphertext = base64ToUint8Array(encrypted.encapsulatedKey);
   
   const ss = await receiver.decap(kyberCiphertext, privateKey);
 
-  // 2. RECONSTRUCT AES KEY
+  // FIX: Force TypeScript to accept 'ss' as a BufferSource here too
   const aesKey = await crypto.subtle.importKey(
     "raw",
-    ss,
+    ss as unknown as BufferSource,
     { name: "AES-GCM" },
     false,
     ["decrypt"]
   );
 
-  // 3. DECRYPT MESSAGE (AES-GCM)
   const combined = base64ToUint8Array(encrypted.ciphertext);
   const iv = combined.slice(0, 12);
   const ciphertext = combined.slice(12);
@@ -132,7 +126,7 @@ export async function decryptMessage(
   return { plaintext: new TextDecoder().decode(decrypted) };
 }
 
-/* ------------------ Storage Helpers (Unchanged) ------------------ */
+/* ------------------ Storage Helpers ------------------ */
 
 export function storeKeyPair(userId: string, keyPair: KyberKeyPair) {
   if (typeof window === 'undefined') return;
