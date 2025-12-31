@@ -5,23 +5,38 @@ import { createClient } from "@/lib/client"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Send } from "lucide-react"
+import { Send, Lock } from "lucide-react"
 import { format } from "date-fns"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { PresenceIndicator } from "./presence-indicator"
 
-// ✅ IMPORT: Real encryption logic
 import { 
   encryptForRecipient, 
-  initializeUserEncryption 
+  initializeUserEncryption,
+  decryptReceivedMessage
 } from "@/lib/encryption-manager"
+
+// --- HELPER: Generate real UUIDs so Optimistic & Server IDs match ---
+function generateUUID() {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
 
 interface Message {
   id: string
   sender_id: string
-  content: string
+  encrypted_content: string
+  encryption_metadata: any
+  sender_encrypted_content?: string 
+  sender_encryption_metadata?: any  
   created_at: string
   sender_profile?: any
+  decryptedDisplay?: string 
 }
 
 interface ChatWindowProps {
@@ -31,24 +46,51 @@ interface ChatWindowProps {
 }
 
 export function ChatWindow({ conversationId, userId, encryptionReady }: ChatWindowProps) {
-  // Move client creation outside render or memoize if possible, 
-  // but for now ensure we don't recreate it unnecessarily.
   const [supabase] = useState(() => createClient()) 
-  
   const [messages, setMessages] = useState<Message[]>([])
   const [text, setText] = useState("")
   const [profiles, setProfiles] = useState<Map<string, any>>(new Map())
-  
-  // Ref to hold the latest profiles without triggering re-renders or effect re-runs
   const profilesRef = useRef<Map<string, any>>(new Map())
-  
   const [otherUser, setOtherUser] = useState<any>(null)
   const viewportRef = useRef<HTMLDivElement | null>(null)
 
   const getInitials = (name: string) =>
     name?.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2) ?? "U"
 
-  /** Load participants & profiles */
+  /** CORE LOGIC: Decrypts the message based on who looks at it. */
+  const processMessage = async (msg: any): Promise<Message> => {
+      let display = "[Encrypted Message]"
+
+      try {
+        // CASE 1: I am the SENDER. I need to decrypt my own "Sender Copy".
+        if (msg.sender_id === userId) {
+            if (msg.sender_encrypted_content && msg.sender_encryption_metadata) {
+                const payload = {
+                    ciphertext: msg.sender_encrypted_content,
+                    sharedSecret: msg.sender_encryption_metadata.shared_secret,
+                    encapsulatedKey: msg.sender_encryption_metadata.encapsulated_key
+                }
+                display = await decryptReceivedMessage(payload, userId)
+            } 
+        } 
+        // CASE 2: I am the RECEIVER. I need to decrypt the "Recipient Copy".
+        else {
+            if (msg.encrypted_content && msg.encryption_metadata) {
+                const payload = {
+                    ciphertext: msg.encrypted_content,
+                    sharedSecret: msg.encryption_metadata.shared_secret,
+                    encapsulatedKey: msg.encryption_metadata.encapsulated_key
+                }
+                display = await decryptReceivedMessage(payload, userId)
+            }
+        }
+      } catch (e) {
+        console.warn("Decryption failed:", e)
+      }
+
+      return { ...msg, decryptedDisplay: display }
+  }
+
   const loadProfiles = async () => {
     const { data: participants } = await supabase
       .from("conversation_participants")
@@ -61,19 +103,19 @@ export function ChatWindow({ conversationId, userId, encryptionReady }: ChatWind
     const otherId = userIds.find(id => id !== userId)
     if (!otherId) return
 
-    const { data: profilesData } = await supabase
+    const { data: profilesData, error } = await supabase
       .from("profiles")
-      .select("id, display_name, avatar_url, status")
+      .select("id, display_name, avatar_url, status, public_key") 
       .in("id", userIds)
+
+    if (error) return
 
     const map = new Map((profilesData || []).map(p => [p.id, p]))
     setProfiles(map)
-    // Update ref immediately
     profilesRef.current = map
     setOtherUser(map.get(otherId))
   }
 
-  /** Load messages */
   const loadMessages = async () => {
     const { data: msgs } = await supabase
       .from("messages")
@@ -83,20 +125,20 @@ export function ChatWindow({ conversationId, userId, encryptionReady }: ChatWind
 
     if (!msgs) return
 
-    const mapped = msgs.map(m => ({
-      ...m,
-      sender_profile: profilesRef.current.get(m.sender_id) || { display_name: "Unknown", avatar_url: "/placeholder.svg", status: "offline" },
+    const processed = await Promise.all(msgs.map(async (m) => {
+        const withProfile = {
+            ...m,
+            sender_profile: profilesRef.current.get(m.sender_id) || { display_name: "Unknown", avatar_url: "/placeholder.svg", status: "offline" }
+        }
+        return await processMessage(withProfile)
     }))
-    setMessages(mapped)
+
+    setMessages(processed)
   }
 
-  /** Initial load */
   useEffect(() => {
     if (!conversationId) return
-    
-    // ✅ INIT: Ensure we have keys (safe to call multiple times)
     initializeUserEncryption(userId)
-    
     loadProfiles()
   }, [conversationId])
 
@@ -105,11 +147,9 @@ export function ChatWindow({ conversationId, userId, encryptionReady }: ChatWind
     loadMessages()
   }, [profiles])
 
-  /** Realtime messages */
+  // --- UPDATED REALTIME LISTENER (PREVENTS DUPLICATES) ---
   useEffect(() => {
     if (!conversationId) return
-
-    console.log("Setting up subscription for:", conversationId)
 
     const channel = supabase
       .channel(`messages:${conversationId}`)
@@ -122,83 +162,103 @@ export function ChatWindow({ conversationId, userId, encryptionReady }: ChatWind
           filter: `conversation_id=eq.${conversationId}`,
         },
         async (payload: any) => {
-          console.log("New message received!", payload)
-          
           const newMsg = payload.new
-          // Use the Ref here to get the latest profiles without stale closures
           let senderProfile = profilesRef.current.get(newMsg.sender_id)
-
-          // Fallback fetch if profile is missing in local state
+          
           if (!senderProfile) {
-            const { data } = await supabase
-              .from("profiles")
-              .select("id, display_name, avatar_url, status")
-              .eq("id", newMsg.sender_id)
-              .single()
-            senderProfile = data
+             const { data } = await supabase.from("profiles").select("*").eq("id", newMsg.sender_id).single()
+             senderProfile = data
           }
 
-          setMessages(prev => [...prev, { ...newMsg, sender_profile: senderProfile }])
+          const processedMsg = await processMessage({ ...newMsg, sender_profile: senderProfile })
+          
+          setMessages(prev => {
+             // DEDUPLICATION CHECK:
+             // If we already have a message with this ID (from our optimistic update),
+             // we just replace it (or ignore it) instead of adding a second copy.
+             const exists = prev.some(m => m.id === processedMsg.id)
+             if (exists) {
+                 return prev.map(m => m.id === processedMsg.id ? processedMsg : m)
+             }
+             return [...prev, processedMsg]
+          })
         }
       )
-      .subscribe((status) => {
-        console.log("Subscription status:", status)
-      })
+      .subscribe()
 
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [conversationId]) // Dependency array is clean: only conversationId
+  }, [conversationId])
 
-  /** Auto scroll */
   useEffect(() => {
     if (viewportRef.current) {
         viewportRef.current.scrollTop = viewportRef.current.scrollHeight
     }
   }, [messages])
 
-  /** Send message with Encryption */
+  /** SEND MESSAGE (DOUBLE ENCRYPTION + UUID) */
   const sendMessage = async () => {
     if (!text.trim()) return
 
     const plainText = text
     setText("") 
 
+    // 1. Generate ID locally so we can match it later
+    const messageId = generateUUID()
+
+    // 2. Optimistic Update (Show immediately)
+    const optimisticMsg: any = {
+        id: messageId, // <--- Using the generated ID
+        sender_id: userId,
+        created_at: new Date().toISOString(),
+        sender_profile: profilesRef.current.get(userId),
+        decryptedDisplay: plainText, 
+        encrypted_content: "", 
+        encryption_metadata: {}
+    }
+    setMessages(prev => [...prev, optimisticMsg])
+
     try {
-        // ✅ REAL ENCRYPTION: Generates ciphertext, sharedSecret, encapsulatedKey
-        // We use 'otherUser.id' which we loaded in loadProfiles
         const recipientId = otherUser?.id
 
-        if (!recipientId) {
-            console.error("Recipient not found, cannot encrypt.")
-            // Optional: fallback or alert here
-            return 
+        if (!recipientId || !otherUser?.public_key) {
+            alert(`Cannot encrypt. ${otherUser?.display_name || "User"} has no public key.`)
+            setMessages(prev => prev.filter(m => m.id !== messageId)) 
+            setText(plainText)
+            return
         }
 
-        const encryptedData = await encryptForRecipient(plainText, recipientId)
+        const receiverData = await encryptForRecipient(plainText, recipientId)
+        const senderData = await encryptForRecipient(plainText, userId)
 
         const { error } = await supabase.from("messages").insert({
+          id: messageId, // <--- IMPORTANT: Send our generated ID to the DB!
           conversation_id: conversationId,
           sender_id: userId,
-          
-          // 1. Store PLAIN TEXT here so the UI still works (avoids 'atob' error)
-          content: plainText, 
-          
-          // 2. Store REAL ENCRYPTION data here (Base64 strings)
-          encrypted_content: encryptedData.ciphertext,
+          encrypted_content: receiverData.ciphertext,
           encryption_metadata: { 
-             shared_secret: encryptedData.sharedSecret,
-             encapsulated_key: encryptedData.encapsulatedKey
+             shared_secret: receiverData.sharedSecret,
+             encapsulated_key: receiverData.encapsulatedKey
           },
+          sender_encrypted_content: senderData.ciphertext,
+          sender_encryption_metadata: {
+             shared_secret: senderData.sharedSecret,
+             encapsulated_key: senderData.encapsulatedKey
+          }
         })
     
         if (error) {
-            console.error("Error sending:", error)
-            setText(plainText)
+           console.error("Supabase Error:", error)
+           setMessages(prev => prev.filter(m => m.id !== messageId)) 
+           setText(plainText)
         }
-    } catch (err) {
+        
+    } catch (err: any) {
         console.error("Encryption failed:", err)
-        setText(plainText) // Restore text so user can try again
+        alert("Encryption failed: " + err.message)
+        setMessages(prev => prev.filter(m => m.id !== messageId))
+        setText(plainText)
     }
   }
 
@@ -216,7 +276,13 @@ export function ChatWindow({ conversationId, userId, encryptionReady }: ChatWind
           />
         </div>
         <div>
-          <p className="font-semibold">{otherUser?.display_name}</p>
+          <p className="font-semibold flex items-center gap-2">
+            {otherUser?.display_name}
+            {otherUser?.public_key && <Lock className="h-3 w-3 text-green-500" />}
+          </p>
+          <p className="text-xs text-slate-500">
+            {otherUser?.public_key ? "Kyber-768" : "Waiting for key..."}
+          </p>
         </div>
       </div>
 
@@ -224,9 +290,8 @@ export function ChatWindow({ conversationId, userId, encryptionReady }: ChatWind
         <div className="flex flex-col gap-2">
           {messages.map(m => {
             const mine = m.sender_id === userId
-            const displayContent = m.content 
-              ? m.content 
-              : "[Encrypted Message]"
+            const contentToShow = m.decryptedDisplay || "[Encrypted Message]"
+
             return (
               <div key={m.id} className={`flex max-w-[70%] gap-2 ${mine ? "flex-row-reverse ml-auto" : "flex-row"}`}>
                 <div className="relative">
@@ -237,7 +302,7 @@ export function ChatWindow({ conversationId, userId, encryptionReady }: ChatWind
                 </div>
                 <div>
                   <div className={`rounded-lg px-4 py-2 text-sm ${mine ? "bg-blue-600 text-white" : "bg-slate-200 text-slate-900"}`}>
-                    {displayContent}
+                    {contentToShow}
                     <div className="mt-1 text-[10px] opacity-70">{format(new Date(m.created_at), "HH:mm")}</div>
                   </div>
                 </div>
@@ -254,7 +319,7 @@ export function ChatWindow({ conversationId, userId, encryptionReady }: ChatWind
         }}
         className="flex gap-2 border-t p-3 flex-shrink-0 bg-white"
       >
-        <Input placeholder="Type a message…" value={text} onChange={e => setText(e.target.value)} />
+        <Input placeholder="Type a message..." value={text} onChange={e => setText(e.target.value)} />
         <Button type="submit" size="icon">
           <Send className="h-4 w-4" />
         </Button>
