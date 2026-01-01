@@ -5,7 +5,7 @@ import { createClient } from "@/lib/client"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Send, Lock, Smile, ArrowLeft } from "lucide-react" // Added ArrowLeft
+import { Send, Lock, Smile, ArrowLeft } from "lucide-react"
 import { format } from "date-fns"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { PresenceIndicator } from "./presence-indicator"
@@ -17,7 +17,6 @@ import {
   decryptReceivedMessage
 } from "@/lib/encryption-manager"
 
-// --- HELPER: Generate real UUIDs ---
 function generateUUID() {
   if (typeof crypto !== 'undefined' && crypto.randomUUID) {
     return crypto.randomUUID();
@@ -44,7 +43,7 @@ interface ChatWindowProps {
   conversationId: string
   userId: string
   encryptionReady: boolean
-  onBack: () => void // <--- NEW PROP for Mobile Back Button
+  onBack: () => void 
 }
 
 export function ChatWindow({ conversationId, userId, encryptionReady, onBack }: ChatWindowProps) {
@@ -55,14 +54,24 @@ export function ChatWindow({ conversationId, userId, encryptionReady, onBack }: 
   const profilesRef = useRef<Map<string, any>>(new Map())
   const [otherUser, setOtherUser] = useState<any>(null)
   const viewportRef = useRef<HTMLDivElement | null>(null)
-  
-  // State for toggling the picker
   const [showEmojiPicker, setShowEmojiPicker] = useState(false)
 
   const getInitials = (name: string) =>
     name?.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2) ?? "U"
 
-  /** CORE LOGIC: Decrypts the message based on who looks at it. */
+  // +++ NEW: Function to tell the server "I saw this!"
+  const markAsRead = async () => {
+    if (!conversationId || !userId) return;
+
+    // We update the 'last_read_at' timestamp to NOW.
+    // This way, any message sent BEFORE this timestamp is considered "Read".
+    await supabase
+      .from("conversation_participants")
+      .update({ last_read_at: new Date().toISOString() })
+      .eq("conversation_id", conversationId)
+      .eq("user_id", userId);
+  }
+
   const processMessage = async (msg: any): Promise<Message> => {
       let display = "[Encrypted Message]"
       try {
@@ -134,6 +143,9 @@ export function ChatWindow({ conversationId, userId, encryptionReady, onBack }: 
     }))
 
     setMessages(processed)
+    
+    // +++ CALL MARK READ: Once messages load, we mark them as read
+    markAsRead(); 
   }
 
   useEffect(() => {
@@ -165,6 +177,9 @@ export function ChatWindow({ conversationId, userId, encryptionReady, onBack }: 
              if (exists) return prev.map(m => m.id === processedMsg.id ? processedMsg : m)
              return [...prev, processedMsg]
           })
+          
+          // +++ CALL MARK READ: If a new message arrives while we are looking, mark it read immediately
+          markAsRead();
         }
       ).subscribe()
     return () => { supabase.removeChannel(channel) }
@@ -176,13 +191,12 @@ export function ChatWindow({ conversationId, userId, encryptionReady, onBack }: 
     }
   }, [messages])
 
-  /** SEND MESSAGE */
   const sendMessage = async () => {
     if (!text.trim()) return
 
     const plainText = text
     setText("") 
-    setShowEmojiPicker(false) // Close picker on send
+    setShowEmojiPicker(false)
 
     const messageId = generateUUID()
     const optimisticMsg: any = {
@@ -195,6 +209,9 @@ export function ChatWindow({ conversationId, userId, encryptionReady, onBack }: 
         encryption_metadata: {}
     }
     setMessages(prev => [...prev, optimisticMsg])
+    
+    // +++ CALL MARK READ: Sending a message also implies we've read the chat
+    markAsRead(); 
 
     try {
         const recipientId = otherUser?.id
@@ -223,9 +240,15 @@ export function ChatWindow({ conversationId, userId, encryptionReady, onBack }: 
              encapsulated_key: senderData.encapsulatedKey
           }
         })
+        
+        // Also update the conversation 'last_message_at' so it moves to top of list
+        await supabase
+          .from("conversations")
+          .update({ last_message_at: new Date().toISOString() })
+          .eq("id", conversationId);
     
         if (error) {
-           console.error("Supabase Error:", error)
+           console.error("Supabase Error FULL:", JSON.stringify(error, null, 2))
            setMessages(prev => prev.filter(m => m.id !== messageId)) 
            setText(plainText)
         }
@@ -237,7 +260,6 @@ export function ChatWindow({ conversationId, userId, encryptionReady, onBack }: 
     }
   }
 
-  // Handle adding emoji to text input
   const onEmojiClick = (emojiObject: any) => {
     setText((prev) => prev + emojiObject.emoji)
   }
@@ -245,8 +267,6 @@ export function ChatWindow({ conversationId, userId, encryptionReady, onBack }: 
   return (
     <div className="flex flex-col h-screen w-full bg-white">
       <div className="flex items-center gap-3 border-b p-4 bg-white flex-shrink-0 relative">
-        
-        {/* --- MOBILE BACK BUTTON --- */}
         <Button 
             variant="ghost" 
             size="icon" 
@@ -293,7 +313,6 @@ export function ChatWindow({ conversationId, userId, encryptionReady, onBack }: 
                 </div>
                 <div>
                   <div className={`rounded-2xl px-4 py-2 text-sm ${mine ? "bg-blue-600 text-white rounded-br-none" : "bg-slate-100 text-slate-900 rounded-bl-none"}`}>
-                    {/* Render emojis correctly */}
                     {contentToShow}
                     <div className={`mt-1 text-[10px] opacity-70 ${mine ? "text-blue-100" : "text-slate-500"}`}>{format(new Date(m.created_at), "HH:mm")}</div>
                   </div>
@@ -311,7 +330,6 @@ export function ChatWindow({ conversationId, userId, encryptionReady, onBack }: 
         }}
         className="flex gap-2 border-t p-3 flex-shrink-0 bg-white relative items-center"
       >
-        {/* The Picker UI (Absolute position above the bar) */}
         {showEmojiPicker && (
           <div className="absolute bottom-16 left-0 z-10 shadow-xl border rounded-lg">
             <EmojiPicker 
@@ -324,7 +342,6 @@ export function ChatWindow({ conversationId, userId, encryptionReady, onBack }: 
           </div>
         )}
 
-        {/* The Emoji Toggle Button */}
         <Button 
             type="button" 
             variant="ghost" 
