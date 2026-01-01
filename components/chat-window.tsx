@@ -5,11 +5,11 @@ import { createClient } from "@/lib/client"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Send, Lock, Smile } from "lucide-react" // +++ EMOJI UPDATE: Import Smile
+import { Send, Lock, Smile, ArrowLeft } from "lucide-react" // Added ArrowLeft
 import { format } from "date-fns"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { PresenceIndicator } from "./presence-indicator"
-import EmojiPicker, { EmojiStyle } from "emoji-picker-react" // +++ EMOJI UPDATE: Import Picker
+import EmojiPicker, { EmojiStyle } from "emoji-picker-react"
 
 import { 
   encryptForRecipient, 
@@ -44,9 +44,10 @@ interface ChatWindowProps {
   conversationId: string
   userId: string
   encryptionReady: boolean
+  onBack: () => void // <--- NEW PROP for Mobile Back Button
 }
 
-export function ChatWindow({ conversationId, userId, encryptionReady }: ChatWindowProps) {
+export function ChatWindow({ conversationId, userId, encryptionReady, onBack }: ChatWindowProps) {
   const [supabase] = useState(() => createClient()) 
   const [messages, setMessages] = useState<Message[]>([])
   const [text, setText] = useState("")
@@ -55,7 +56,7 @@ export function ChatWindow({ conversationId, userId, encryptionReady }: ChatWind
   const [otherUser, setOtherUser] = useState<any>(null)
   const viewportRef = useRef<HTMLDivElement | null>(null)
   
-  // +++ EMOJI UPDATE: State for toggling the picker
+  // State for toggling the picker
   const [showEmojiPicker, setShowEmojiPicker] = useState(false)
 
   const getInitials = (name: string) =>
@@ -236,14 +237,25 @@ export function ChatWindow({ conversationId, userId, encryptionReady }: ChatWind
     }
   }
 
-  // +++ EMOJI UPDATE: Handle adding emoji to text input
+  // Handle adding emoji to text input
   const onEmojiClick = (emojiObject: any) => {
     setText((prev) => prev + emojiObject.emoji)
   }
 
   return (
-    <div className="flex flex-col h-screen">
+    <div className="flex flex-col h-screen w-full bg-white">
       <div className="flex items-center gap-3 border-b p-4 bg-white flex-shrink-0 relative">
+        
+        {/* --- MOBILE BACK BUTTON --- */}
+        <Button 
+            variant="ghost" 
+            size="icon" 
+            className="md:hidden mr-1 text-slate-600" 
+            onClick={onBack}
+        >
+            <ArrowLeft className="h-6 w-6" />
+        </Button>
+
         <div className="relative">
           <Avatar className="h-10 w-10">
             <AvatarImage src={otherUser?.avatar_url || "/placeholder.svg"} />
@@ -272,18 +284,18 @@ export function ChatWindow({ conversationId, userId, encryptionReady }: ChatWind
             const contentToShow = m.decryptedDisplay || "[Encrypted Message]"
 
             return (
-              <div key={m.id} className={`flex max-w-[70%] gap-2 ${mine ? "flex-row-reverse ml-auto" : "flex-row"}`}>
-                <div className="relative">
+              <div key={m.id} className={`flex max-w-[85%] md:max-w-[70%] gap-2 ${mine ? "flex-row-reverse ml-auto" : "flex-row"}`}>
+                <div className="relative hidden md:block">
                   <Avatar className="h-8 w-8">
                     <AvatarImage src={m.sender_profile?.avatar_url || "/placeholder.svg"} />
                     <AvatarFallback>{getInitials(m.sender_profile?.display_name)}</AvatarFallback>
                   </Avatar>
                 </div>
                 <div>
-                  <div className={`rounded-lg px-4 py-2 text-sm ${mine ? "bg-blue-600 text-white" : "bg-slate-200 text-slate-900"}`}>
+                  <div className={`rounded-2xl px-4 py-2 text-sm ${mine ? "bg-blue-600 text-white rounded-br-none" : "bg-slate-100 text-slate-900 rounded-bl-none"}`}>
                     {/* Render emojis correctly */}
                     {contentToShow}
-                    <div className="mt-1 text-[10px] opacity-70">{format(new Date(m.created_at), "HH:mm")}</div>
+                    <div className={`mt-1 text-[10px] opacity-70 ${mine ? "text-blue-100" : "text-slate-500"}`}>{format(new Date(m.created_at), "HH:mm")}</div>
                   </div>
                 </div>
               </div>
@@ -297,21 +309,22 @@ export function ChatWindow({ conversationId, userId, encryptionReady }: ChatWind
           e.preventDefault()
           sendMessage()
         }}
-        className="flex gap-2 border-t p-3 flex-shrink-0 bg-white relative items-center" // +++ Added 'relative items-center'
+        className="flex gap-2 border-t p-3 flex-shrink-0 bg-white relative items-center"
       >
-        {/* +++ EMOJI UPDATE: The Picker UI (Absolute position above the bar) */}
+        {/* The Picker UI (Absolute position above the bar) */}
         {showEmojiPicker && (
           <div className="absolute bottom-16 left-0 z-10 shadow-xl border rounded-lg">
             <EmojiPicker 
               onEmojiClick={onEmojiClick} 
               lazyLoadEmojis={true}
-              searchDisabled={true} // Optional: simplify UI
+              searchDisabled={true} 
               height={350}
+              width={300}
             />
           </div>
         )}
 
-        {/* +++ EMOJI UPDATE: The Toggle Button */}
+        {/* The Emoji Toggle Button */}
         <Button 
             type="button" 
             variant="ghost" 
