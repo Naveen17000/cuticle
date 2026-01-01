@@ -5,10 +5,11 @@ import { createClient } from "@/lib/client"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Send, Lock } from "lucide-react"
+import { Send, Lock, Smile } from "lucide-react" // +++ EMOJI UPDATE: Import Smile
 import { format } from "date-fns"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { PresenceIndicator } from "./presence-indicator"
+import EmojiPicker, { EmojiStyle } from "emoji-picker-react" // +++ EMOJI UPDATE: Import Picker
 
 import { 
   encryptForRecipient, 
@@ -16,7 +17,7 @@ import {
   decryptReceivedMessage
 } from "@/lib/encryption-manager"
 
-// --- HELPER: Generate real UUIDs so Optimistic & Server IDs match ---
+// --- HELPER: Generate real UUIDs ---
 function generateUUID() {
   if (typeof crypto !== 'undefined' && crypto.randomUUID) {
     return crypto.randomUUID();
@@ -53,6 +54,9 @@ export function ChatWindow({ conversationId, userId, encryptionReady }: ChatWind
   const profilesRef = useRef<Map<string, any>>(new Map())
   const [otherUser, setOtherUser] = useState<any>(null)
   const viewportRef = useRef<HTMLDivElement | null>(null)
+  
+  // +++ EMOJI UPDATE: State for toggling the picker
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false)
 
   const getInitials = (name: string) =>
     name?.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2) ?? "U"
@@ -60,9 +64,7 @@ export function ChatWindow({ conversationId, userId, encryptionReady }: ChatWind
   /** CORE LOGIC: Decrypts the message based on who looks at it. */
   const processMessage = async (msg: any): Promise<Message> => {
       let display = "[Encrypted Message]"
-
       try {
-        // CASE 1: I am the SENDER. I need to decrypt my own "Sender Copy".
         if (msg.sender_id === userId) {
             if (msg.sender_encrypted_content && msg.sender_encryption_metadata) {
                 const payload = {
@@ -72,9 +74,7 @@ export function ChatWindow({ conversationId, userId, encryptionReady }: ChatWind
                 }
                 display = await decryptReceivedMessage(payload, userId)
             } 
-        } 
-        // CASE 2: I am the RECEIVER. I need to decrypt the "Recipient Copy".
-        else {
+        } else {
             if (msg.encrypted_content && msg.encryption_metadata) {
                 const payload = {
                     ciphertext: msg.encrypted_content,
@@ -87,7 +87,6 @@ export function ChatWindow({ conversationId, userId, encryptionReady }: ChatWind
       } catch (e) {
         console.warn("Decryption failed:", e)
       }
-
       return { ...msg, decryptedDisplay: display }
   }
 
@@ -147,48 +146,27 @@ export function ChatWindow({ conversationId, userId, encryptionReady }: ChatWind
     loadMessages()
   }, [profiles])
 
-  // --- UPDATED REALTIME LISTENER (PREVENTS DUPLICATES) ---
   useEffect(() => {
     if (!conversationId) return
-
     const channel = supabase
       .channel(`messages:${conversationId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "messages",
-          filter: `conversation_id=eq.${conversationId}`,
-        },
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages", filter: `conversation_id=eq.${conversationId}` },
         async (payload: any) => {
           const newMsg = payload.new
           let senderProfile = profilesRef.current.get(newMsg.sender_id)
-          
           if (!senderProfile) {
              const { data } = await supabase.from("profiles").select("*").eq("id", newMsg.sender_id).single()
              senderProfile = data
           }
-
           const processedMsg = await processMessage({ ...newMsg, sender_profile: senderProfile })
-          
           setMessages(prev => {
-             // DEDUPLICATION CHECK:
-             // If we already have a message with this ID (from our optimistic update),
-             // we just replace it (or ignore it) instead of adding a second copy.
              const exists = prev.some(m => m.id === processedMsg.id)
-             if (exists) {
-                 return prev.map(m => m.id === processedMsg.id ? processedMsg : m)
-             }
+             if (exists) return prev.map(m => m.id === processedMsg.id ? processedMsg : m)
              return [...prev, processedMsg]
           })
         }
-      )
-      .subscribe()
-
-    return () => {
-      supabase.removeChannel(channel)
-    }
+      ).subscribe()
+    return () => { supabase.removeChannel(channel) }
   }, [conversationId])
 
   useEffect(() => {
@@ -197,19 +175,17 @@ export function ChatWindow({ conversationId, userId, encryptionReady }: ChatWind
     }
   }, [messages])
 
-  /** SEND MESSAGE (DOUBLE ENCRYPTION + UUID) */
+  /** SEND MESSAGE */
   const sendMessage = async () => {
     if (!text.trim()) return
 
     const plainText = text
     setText("") 
+    setShowEmojiPicker(false) // Close picker on send
 
-    // 1. Generate ID locally so we can match it later
     const messageId = generateUUID()
-
-    // 2. Optimistic Update (Show immediately)
     const optimisticMsg: any = {
-        id: messageId, // <--- Using the generated ID
+        id: messageId,
         sender_id: userId,
         created_at: new Date().toISOString(),
         sender_profile: profilesRef.current.get(userId),
@@ -221,7 +197,6 @@ export function ChatWindow({ conversationId, userId, encryptionReady }: ChatWind
 
     try {
         const recipientId = otherUser?.id
-
         if (!recipientId || !otherUser?.public_key) {
             alert(`Cannot encrypt. ${otherUser?.display_name || "User"} has no public key.`)
             setMessages(prev => prev.filter(m => m.id !== messageId)) 
@@ -233,7 +208,7 @@ export function ChatWindow({ conversationId, userId, encryptionReady }: ChatWind
         const senderData = await encryptForRecipient(plainText, userId)
 
         const { error } = await supabase.from("messages").insert({
-          id: messageId, // <--- IMPORTANT: Send our generated ID to the DB!
+          id: messageId,
           conversation_id: conversationId,
           sender_id: userId,
           encrypted_content: receiverData.ciphertext,
@@ -253,13 +228,17 @@ export function ChatWindow({ conversationId, userId, encryptionReady }: ChatWind
            setMessages(prev => prev.filter(m => m.id !== messageId)) 
            setText(plainText)
         }
-        
     } catch (err: any) {
         console.error("Encryption failed:", err)
         alert("Encryption failed: " + err.message)
         setMessages(prev => prev.filter(m => m.id !== messageId))
         setText(plainText)
     }
+  }
+
+  // +++ EMOJI UPDATE: Handle adding emoji to text input
+  const onEmojiClick = (emojiObject: any) => {
+    setText((prev) => prev + emojiObject.emoji)
   }
 
   return (
@@ -281,7 +260,7 @@ export function ChatWindow({ conversationId, userId, encryptionReady }: ChatWind
             {otherUser?.public_key && <Lock className="h-3 w-3 text-green-500" />}
           </p>
           <p className="text-xs text-slate-500">
-            {otherUser?.public_key ? "Kyber-768" : "Waiting for key..."}
+            {otherUser?.public_key ? "Kyber-768 Zero-Knowledge" : "Waiting for key..."}
           </p>
         </div>
       </div>
@@ -302,6 +281,7 @@ export function ChatWindow({ conversationId, userId, encryptionReady }: ChatWind
                 </div>
                 <div>
                   <div className={`rounded-lg px-4 py-2 text-sm ${mine ? "bg-blue-600 text-white" : "bg-slate-200 text-slate-900"}`}>
+                    {/* Render emojis correctly */}
                     {contentToShow}
                     <div className="mt-1 text-[10px] opacity-70">{format(new Date(m.created_at), "HH:mm")}</div>
                   </div>
@@ -317,8 +297,31 @@ export function ChatWindow({ conversationId, userId, encryptionReady }: ChatWind
           e.preventDefault()
           sendMessage()
         }}
-        className="flex gap-2 border-t p-3 flex-shrink-0 bg-white"
+        className="flex gap-2 border-t p-3 flex-shrink-0 bg-white relative items-center" // +++ Added 'relative items-center'
       >
+        {/* +++ EMOJI UPDATE: The Picker UI (Absolute position above the bar) */}
+        {showEmojiPicker && (
+          <div className="absolute bottom-16 left-0 z-10 shadow-xl border rounded-lg">
+            <EmojiPicker 
+              onEmojiClick={onEmojiClick} 
+              lazyLoadEmojis={true}
+              searchDisabled={true} // Optional: simplify UI
+              height={350}
+            />
+          </div>
+        )}
+
+        {/* +++ EMOJI UPDATE: The Toggle Button */}
+        <Button 
+            type="button" 
+            variant="ghost" 
+            size="icon" 
+            onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+            className="text-slate-500 hover:text-slate-700"
+        >
+            <Smile className="h-5 w-5" />
+        </Button>
+
         <Input placeholder="Type a message..." value={text} onChange={e => setText(e.target.value)} />
         <Button type="submit" size="icon">
           <Send className="h-4 w-4" />
